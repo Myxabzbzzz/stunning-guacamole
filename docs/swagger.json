@@ -1,0 +1,107 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Billing API",
+    "description": "Надежный RESTful API для управления пользовательскими аккаунтами, транзакциями и биллинговыми операциями. Обеспечивает аутентификацию, управление транзакциями, отслеживание баланса и историю операций.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Локальный сервер разработки" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "SessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "myxabzbzzz"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Иван Иванов" },
+          "phone_number": { "type": "string", "example": "+998908620059" },
+          "card_number": { "type": "string", "example": "1234567890123456" },
+          "amount_of_money": { "type": "integer", "example": 1000 },
+          "email": { "type": "string", "example": "ivan@example.com" },
+          "is_deleted": { "type": "boolean", "example": false }
+        }
+      },
+      "UserCreateRequest": {
+        "type": "object",
+        "required": ["name", "phone_number", "card_number", "amount_of_money", "email", "password"],
+        "properties": {
+          "name": { "type": "string" },
+          "phone_number": { "type": "string" },
+          "card_number": { "type": "string" },
+          "amount_of_money": { "type": "integer" },
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
+      "UserList": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/User" }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "from_user_id": { "type": "integer", "example": 1 },
+          "to_user_id": { "type": "integer", "example": 2 },
+          "amount_of_money": { "type": "integer", "example": 100 },
+          "transaction_time": { "type": "string", "format": "date-time", "example": "2024-07-02T12:00:00Z" },
+          "status": { "type": "string", "description": "Статус транзакции: pending (ожидает), created (создана), confirmed (подтверждена), canceled (отменена)", "enum": ["pending", "created", "confirmed", "canceled"], "example": "created" },
+          "is_deleted": { "type": "boolean", "example": false }
+        }
+      },
+      "TransactionCreateRequest": {
+        "type": "object",
+        "required": ["from_user_id", "to_user_id", "amount_of_money"],
+        "properties": {
+          "from_user_id": { "type": "integer" },
+          "to_user_id": { "type": "integer" },
+          "amount_of_money": { "type": "integer" }
+        }
+      },
+      "TransactionList": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/Transaction" }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Описание ошибки" }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" }
+        }
+      },
+      "BalanceResponse": {
+        "type": "object",
+        "properties": {
+          "balance": { "type": "integer", "example": 1000 }
+        }
+      },
+      "TransactionStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "description": "Статус транзакции: confirmed, canceled, created", "example": "confirmed" }
+        }
+      }
+    }
+  },
+  "security": [ { "SessionAuth": [] } ],
+  "tags": [
+    { "name": "Аутентификация" },
+    { "name": "Пользователи" },
+    { "name": "Транзакции" },
+    { "name": "Система" }
+  ],
+  "paths": {}
+}

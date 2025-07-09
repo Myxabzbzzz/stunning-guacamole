@@ -1,0 +1,536 @@
+openapi: 3.0.3
+info:
+  title: Billing API
+  description: |
+    Надежный RESTful API для управления пользовательскими аккаунтами, транзакциями и биллинговыми операциями.
+    Обеспечивает аутентификацию, управление транзакциями, отслеживание баланса и историю операций.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер разработки
+
+components:
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: myxabzbzzz
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Иван Иванов
+        phone_number:
+          type: string
+          example: "+998908620059"
+        card_number:
+          type: string
+          example: "1234567890123456"
+        amount_of_money:
+          type: integer
+          example: 1000
+        email:
+          type: string
+          example: ivan@example.com
+        is_deleted:
+          type: boolean
+          example: false
+    UserCreateRequest:
+      type: object
+      required: [name, phone_number, card_number, amount_of_money, email, password]
+      properties:
+        name:
+          type: string
+        phone_number:
+          type: string
+        card_number:
+          type: string
+        amount_of_money:
+          type: integer
+        email:
+          type: string
+        password:
+          type: string
+    UserList:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        from_user_id:
+          type: integer
+          example: 1
+        to_user_id:
+          type: integer
+          example: 2
+        amount_of_money:
+          type: integer
+          example: 100
+        transaction_time:
+          type: string
+          format: date-time
+          example: "2024-07-02T12:00:00Z"
+        status:
+          type: string
+          description: "Статус транзакции: pending (ожидает), created (создана), confirmed (подтверждена), canceled (отменена)"
+          enum: [pending, created, confirmed, canceled]
+          example: created
+        is_deleted:
+          type: boolean
+          example: false
+    TransactionCreateRequest:
+      type: object
+      required: [from_user_id, to_user_id, amount_of_money]
+      properties:
+        from_user_id:
+          type: integer
+        to_user_id:
+          type: integer
+        amount_of_money:
+          type: integer
+    TransactionList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Transaction'
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Описание ошибки
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    BalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: integer
+          example: 1000
+    TransactionStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: "Статус транзакции: confirmed, canceled, created"
+          example: confirmed
+
+security:
+  - SessionAuth: []
+
+tags:
+  - name: Аутентификация
+  - name: Пользователи
+  - name: Транзакции
+  - name: Система
+
+paths:
+  /sessions:
+    post:
+      tags: [Аутентификация]
+      summary: Вход пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: ivan@example.com
+                password:
+                  type: string
+                  example: securepassword
+      responses:
+        '200':
+          description: Успешный вход
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Неверный email или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован или удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /private/whoami:
+    get:
+      tags: [Аутентификация]
+      summary: Получение информации о текущем пользователе
+      security:
+        - SessionAuth: []
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users:
+    post:
+      tags: [Пользователи]
+      summary: Создание нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email уже используется
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Некорректные параметры
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Пользователи]
+      summary: Список всех пользователей
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+  /users/{id}:
+    get:
+      tags: [Пользователи]
+      summary: Получение пользователя по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}/balance:
+    get:
+      tags: [Пользователи]
+      summary: Получение баланса пользователя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Баланс пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}/transactions:
+    get:
+      tags: [Пользователи]
+      summary: Получение истории транзакций пользователя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список транзакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}/delete:
+    post:
+      tags: [Пользователи]
+      summary: Мягкое удаление пользователя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Пользователь помечен как удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}/restore:
+    post:
+      tags: [Пользователи]
+      summary: Восстановление пользователя (undo soft-delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Пользователь восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /transactions:
+    post:
+      tags: [Транзакции]
+      summary: Создание новой транзакции
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreateRequest'
+      responses:
+        '201':
+          description: Транзакция создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Ошибка валидации или некорректные параметры
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Некорректные параметры
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Транзакции]
+      summary: Список всех транзакций
+      responses:
+        '200':
+          description: Список транзакций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+  /transactions/{id}:
+    get:
+      tags: [Транзакции]
+      summary: Получение транзакции по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные транзакции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транзакция не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /transactions/{id}/confirm:
+    post:
+      tags: [Транзакции]
+      summary: Подтверждение транзакции
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Транзакция подтверждена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+        '400':
+          description: Некорректный ID или транзакция уже обработана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно средств или пользователь удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транзакция не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /transactions/{id}/cancel:
+    post:
+      tags: [Транзакции]
+      summary: Отмена транзакции
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Транзакция отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+        '400':
+          description: Некорректный ID или транзакция не может быть отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транзакция не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /status:
+    get:
+      tags: [Система]
+      summary: Проверка состояния API
+      responses:
+        '200':
+          description: API работает
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
