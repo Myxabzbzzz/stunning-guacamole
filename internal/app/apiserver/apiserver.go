@@ -1,71 +1,58 @@
 package apiserver
 
 import (
-	"dodobackend/internal/app/store"
+	"billing_API/internal/app/store/sqlstore"
+	"database/sql"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
+	"github.com/gorilla/sessions"
+	_ "github.com/lib/pq"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// APIServer
-type APIServer struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	Store  *store.Store
-}
-
-// NewAPIServer
-func NewAPIServer(config *Config) *APIServer {
-	return &APIServer{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-
-}
-
-// Run
-func (apiServer *APIServer) Run() error {
-	if err := apiServer.configureLogger(); err != nil {
-		return err
-	}
-	apiServer.configureRouter()
-	if err := apiServer.configureStore(); err != nil {
-		return err
-	}
-
-	apiServer.logger.Info("Starting API Server")
-	return http.ListenAndServe(apiServer.config.BindAddr, apiServer.router)
-}
-
-// logger
-func (apiServer *APIServer) configureLogger() error {
-	level, err := logrus.ParseLevel(apiServer.config.LogLevel)
+// Start ...
+func Start(config *Config) error {
+	db, err := newDB(config.DatabaseURL)
 	if err != nil {
 		return err
 	}
-	apiServer.logger.SetLevel(level)
-	return nil
+
+	defer db.Close()
+	store := sqlstore.New(db)
+	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey))
+	srv := newServer(store, sessionStore)
+
+	return http.ListenAndServe(config.BindAddr, srv)
 }
 
-// router
-func (apiServer *APIServer) configureRouter() {
-	apiServer.router.HandleFunc("/status", apiServer.handleStatus())
-}
-
-func (apiserver *APIServer) configureStore() error {
-	st := store.New(apiserver.config.Store)
-	if err := st.Open(); err != nil {
+// StartWithSwagger
+func StartWithSwagger(config *Config) error {
+	db, err := newDB(config.DatabaseURL)
+	if err != nil {
 		return err
 	}
-	apiserver.Store = st
-	return nil
+	defer db.Close()
+	store := sqlstore.New(db)
+	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey))
+	srv := newServer(store, sessionStore)
+
+	srv.router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	// Добавляем обработчик для /swagger.yaml
+	srv.router.PathPrefix("/swagger.yaml").Handler(http.StripPrefix("/swagger.yaml", http.FileServer(http.Dir("docs"))))
+
+	return http.ListenAndServe(config.BindAddr, srv)
 }
 
-func (apiServer *APIServer) handleStatus() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+func newDB(dbURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
