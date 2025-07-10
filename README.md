@@ -1,152 +1,152 @@
 # Billing API
 
-Надежный RESTful API для управления пользовательскими аккаунтами, транзакциями и биллинговыми операциями. Построен на Go, этот API обеспечивает безопасную аутентификацию пользователей, управление транзакциями и отслеживание баланса счетов.
+A reliable RESTful API for managing user accounts, transactions, and billing operations. Built in Go, this API provides secure user authentication, transaction management, and real-time account balance tracking.
 
-## Возможности
+## Features
 
-- **Управление пользователями**: Создание, получение и управление пользовательскими аккаунтами
-- **Обработка транзакций**: Обработка денежных переводов между пользователями
-- **Аутентификация**: Безопасная аутентификация на основе сессий
-- **Отслеживание баланса**: Мониторинг баланса аккаунта в реальном времени
-- **История транзакций**: Полное логирование и получение транзакций
-- **Мягкое удаление**: Безопасное удаление пользователей с сохранением данных
-- **Поддержка CORS**: Включен обмен ресурсами между источниками
-- **Логирование запросов**: Подробное логирование запросов/ответов
-- **Интеграция с базой данных**: PostgreSQL с поддержкой миграций
+- **User Management**: Create, retrieve, and manage user accounts
+- **Transaction Processing**: Handle money transfers between users
+- **Authentication**: Secure session-based authentication
+- **Balance Tracking**: Real-time account balance monitoring
+- **Transaction History**: Full logging and retrieval of transactions
+- **Soft Delete**: Safe user deletion with data retention
+- **CORS Support**: Cross-origin resource sharing enabled
+- **Request Logging**: Detailed request/response logging
+- **Database Integration**: PostgreSQL with migration support
 
-## Технологический стек
+## Technology Stack
 
-- **Язык**: Go 1.23+
-- **Фреймворк**: Gorilla Mux (HTTP роутер)
-- **База данных**: PostgreSQL
-- **Аутентификация**: Gorilla Sessions
-- **Конфигурация**: TOML
-- **Логирование**: Logrus
-- **Валидация**: Ozzo Validation
-- **Тестирование**: Testify
+- **Language**: Go 1.23+
+- **Framework**: Gorilla Mux (HTTP router)
+- **Database**: PostgreSQL
+- **Authentication**: Gorilla Sessions
+- **Configuration**: TOML
+- **Logging**: Logrus
+- **Validation**: Ozzo Validation
+- **Testing**: Testify
 
-## Структура проекта
+## Project Structure
 
 ```
 billing_API/
-├── cmd/apiserver/          # Точка входа приложения
-├── configs/                # Файлы конфигурации
-├── internal/               # Приватный код приложения
+├── cmd/apiserver/          # Application entry point
+├── configs/                # Configuration files
+├── internal/               # Private application code
 │   ├── app/
-│   │   ├── apiserver/      # Реализация HTTP сервера
-│   │   ├── model/          # Модели данных
-│   │   └── store/          # Слой доступа к данным
-│   │       ├── sqlstore/   # Реализация PostgreSQL
-│   │       └── teststore/  # Реализация тестового хранилища
-├── migrations/             # Миграции базы данных
-├── go.mod                  # Файл Go модуля
-├── go.sum                  # Контрольные суммы Go модуля
-└── Makefile               # Автоматизация сборки
+│   │   ├── apiserver/      # HTTP server implementation
+│   │   ├── model/          # Data models
+│   │   └── store/          # Data access layer
+│   │       ├── sqlstore/   # PostgreSQL implementation
+│   │       └── teststore/  # Test storage implementation
+├── migrations/             # Database migrations
+├── go.mod                  # Go module file
+├── go.sum                  # Go module checksums
+└── Makefile                # Build automation
 ```
 
-## Требования
+## Requirements
 
-- Go 1.23 или выше
-- PostgreSQL 12 или выше
-- Make (опционально, для автоматизации сборки)
+- Go 1.23 or higher
+- PostgreSQL 12 or higher
+- Make (optional, for build automation)
 
-## Установка
+## Installation
 
-1. **Клонирование репозитория**
+1. **Clone the repository**
    ```bash
-   git clone <url-репозитория>
+   git clone <repository-url>
    cd billing_API
    ```
 
-2. **Установка зависимостей**
+2. **Install dependencies**
    ```bash
    go mod download
    ```
 
-3. **Настройка базы данных**
+3. **Set up the database**
    ```bash
-   # Создание базы данных PostgreSQL
+   # Create the PostgreSQL database
    createdb restapi_dev
    
-   # Запуск миграций
+   # Run migrations
    psql -d restapi_dev -f migrations/20240702123000_init_schema.up.sql
    ```
 
-4. **Конфигурация приложения**
+4. **Configure the application**
    
-   Отредактируйте `configs/apiserver.toml` с вашими учетными данными базы данных:
+   Edit `configs/apiserver.toml` with your database credentials:
    ```toml
    bind_addr = ":8080"
    log_level = "debug"
-   database_url = "host=localhost dbname=restapi_dev password=ваш_пароль sslmode=disable"
-   session_key = "ваш_ключ_сессии_здесь"
+   database_url = "host=localhost dbname=restapi_dev password=your_password sslmode=disable"
+   session_key = "your_session_key_here"
    ```
 
-## Использование
+## Usage
 
-### Сборка приложения
+### Build the application
 
 ```bash
-# Используя Make
+# Using Make
 make build
 
-# Или напрямую с Go
+# Or directly with Go
 go build -v ./cmd/apiserver
 ```
 
-### Запуск приложения
+### Run the application
 
 ```bash
-# Используя собранный бинарный файл
+# Using the built binary
 ./apiserver
 
-# Или с пользовательским путем к конфигурации
-./apiserver -config-path=/путь/к/config.toml
+# Or with a custom config path
+./apiserver -config-path=/path/to/config.toml
 
-# Или напрямую с Go
+# Or directly with Go
 go run ./cmd/apiserver
 ```
 
-### Запуск тестов
+### Run tests
 
 ```bash
-# Используя Make
+# Using Make
 make test
 
-# Или напрямую с Go
+# Or directly with Go
 go test -v -race -timeout 30s ./...
 ```
 
 ## API Endpoints
 
-### Аутентификация
+### Authentication
 
-- `POST /sessions` - Вход пользователя
-- `GET /private/whoami` - Получение информации о текущем пользователе (аутентифицированный)
+- `POST /sessions` - User login
+- `GET /private/whoami` - Get current user info (authenticated)
 
-### Управление пользователями
+### User Management
 
-- `POST /users` - Создание нового пользователя
-- `GET /users` - Список всех пользователей
-- `GET /users/{id}` - Получение пользователя по ID
-- `GET /users/{id}/balance` - Получение баланса пользователя
-- `GET /users/{id}/transactions` - Получение истории транзакций пользователя
-- `POST /users/{id}/delete` - Мягкое удаление пользователя
+- `POST /users` - Create a new user
+- `GET /users` - List all users
+- `GET /users/{id}` - Get user by ID
+- `GET /users/{id}/balance` - Get user balance
+- `GET /users/{id}/transactions` - Get user transaction history
+- `POST /users/{id}/delete` - Soft delete user
 
-### Управление транзакциями
+### Transaction Management
 
-- `POST /transactions` - Создание новой транзакции
-- `GET /transactions` - Список всех транзакций
-- `GET /transactions/{id}` - Получение транзакции по ID
-- `POST /transactions/{id}/cancel` - Отмена транзакции
+- `POST /transactions` - Create a new transaction
+- `GET /transactions` - List all transactions
+- `GET /transactions/{id}` - Get transaction by ID
+- `POST /transactions/{id}/cancel` - Cancel transaction
 
-### Система
+### System
 
-- `GET /status` - Проверка состояния API
+- `GET /status` - API status check
 
-## Примеры API
+## API Examples
 
-### Создание пользователя
+### Create a user
 
 ```bash
 curl -X POST http://localhost:8080/users \
@@ -161,7 +161,7 @@ curl -X POST http://localhost:8080/users \
   }'
 ```
 
-### Вход пользователя
+### User login
 
 ```bash
 curl -X POST http://localhost:8080/sessions \
@@ -172,7 +172,7 @@ curl -X POST http://localhost:8080/sessions \
   }'
 ```
 
-### Создание транзакции
+### Create a transaction
 
 ```bash
 curl -X POST http://localhost:8080/transactions \
@@ -184,119 +184,119 @@ curl -X POST http://localhost:8080/transactions \
   }'
 ```
 
-### Получение баланса пользователя
+### Get user balance
 
 ```bash
 curl http://localhost:8080/users/1/balance
 ```
 
-## Схема базы данных
+## Database Schema
 
-### Таблица Users
-- `id` - Первичный ключ
-- `name` - Полное имя пользователя
-- `phone_number` - Контактный номер телефона
-- `card_number` - Уникальный идентификатор карты
-- `amount_of_money` - Баланс аккаунта
-- `email` - Уникальный email адрес
-- `encrypted_password` - Хешированный пароль
-- `is_deleted` - Флаг мягкого удаления
+### Users Table
+- `id` - Primary key
+- `name` - Full name of the user
+- `phone_number` - Contact phone number
+- `card_number` - Unique card identifier
+- `amount_of_money` - Account balance
+- `email` - Unique email address
+- `encrypted_password` - Hashed password
+- `is_deleted` - Soft delete flag
 
-### Таблица Transactions
-- `id` - Первичный ключ
-- `from_user_id` - ID пользователя-отправителя
-- `to_user_id` - ID пользователя-получателя
-- `amount_of_money` - Сумма транзакции
-- `transaction_time` - Временная метка
-- `is_deleted` - Флаг мягкого удаления
+### Transactions Table
+- `id` - Primary key
+- `from_user_id` - Sender user ID
+- `to_user_id` - Recipient user ID
+- `amount_of_money` - Transaction amount
+- `transaction_time` - Timestamp
+- `is_deleted` - Soft delete flag
 
-## Конфигурация
+## Configuration
 
-Приложение использует файлы конфигурации TOML. Основные опции конфигурации:
+The application uses TOML configuration files. Main configuration options:
 
-- `bind_addr` - Адрес привязки сервера (по умолчанию: ":8080")
-- `log_level` - Уровень логирования (debug, info, warn, error)
-- `database_url` - Строка подключения PostgreSQL
-- `session_key` - Секретный ключ для шифрования сессий
+- `bind_addr` - Server bind address (default: ":8080")
+- `log_level` - Logging level (debug, info, warn, error)
+- `database_url` - PostgreSQL connection string
+- `session_key` - Secret key for session encryption
 
-## Разработка
+## Development
 
-### Структура проекта
+### Project Structure
 
-Проект следует принципам чистой архитектуры:
+The project follows clean architecture principles:
 
-- **Модели** (`internal/app/model/`) - Бизнес-логика и структуры данных
-- **Хранилище** (`internal/app/store/`) - Абстракция доступа к данным
-- **API Сервер** (`internal/app/apiserver/`) - HTTP сервер и обработчики
-- **Конфигурация** (`configs/`) - Конфигурация приложения
+- **Models** (`internal/app/model/`) - Business logic and data structures
+- **Store** (`internal/app/store/`) - Data access abstraction
+- **API Server** (`internal/app/apiserver/`) - HTTP server and handlers
+- **Configuration** (`configs/`) - Application configuration
 
-### Добавление новых функций
+### Adding New Features
 
-1. Определите модели в `internal/app/model/`
-2. Реализуйте методы хранилища в `internal/app/store/`
-3. Добавьте HTTP обработчики в `internal/app/apiserver/server.go`
-4. Обновите конфигурацию роутера
-5. Добавьте тесты для новой функциональности
+1. Define models in `internal/app/model/`
+2. Implement store methods in `internal/app/store/`
+3. Add HTTP handlers in `internal/app/apiserver/server.go`
+4. Update router configuration
+5. Add tests for new functionality
 
-## Тестирование
+## Testing
 
-Проект включает комплексные тесты:
+The project includes comprehensive tests:
 
-- Модульные тесты для моделей и бизнес-логики
-- Интеграционные тесты для слоя хранилища
-- Тесты HTTP обработчиков
-- Сквозные тесты API
+- Unit tests for models and business logic
+- Integration tests for the store layer
+- HTTP handler tests
+- End-to-end API tests
 
-Запуск тестов:
+Run tests:
 ```bash
 go test -v ./...
 ```
 
-## Вклад в проект
+## Contributing
 
-1. Форкните репозиторий
-2. Создайте ветку для функции
-3. Внесите изменения
-4. Добавьте тесты для новой функциональности
-5. Убедитесь, что все тесты проходят
-6. Отправьте pull request
+1. Fork the repository
+2. Create a feature branch
+3. Make changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
-## Лицензия
+## License
 
-[Добавьте информацию о лицензии здесь]
+[Add license information here]
 
-## Поддержка
+## Support
 
-Для поддержки и вопросов, пожалуйста, [создайте issue](ссылка-на-issues) или свяжитесь с командой разработки.
+For support and questions, please [create an issue](issue-link) or contact the development team.
 
 ## Swagger UI
 
-Swagger UI доступен по адресу:
+Swagger UI is available at:
 
 - http://localhost:8080/swagger/index.html?url=/swagger.yaml
 
-## Новые эндпоинты
+## New Endpoints
 
-- `POST /logout` — Выход пользователя (удаление сессии)
-- `POST /users/{id}/restore` — Восстановление пользователя (undo soft-delete)
+- `POST /logout` — User logout (session removal)
+- `POST /users/{id}/restore` — Restore user (undo soft-delete)
 
-## Требования к уникальности
+## Uniqueness Requirements
 
-- Email, phone_number и card_number должны быть уникальны для каждого пользователя.
+- Email, phone_number, and card_number must be unique for each user.
 
 ## Rate limiting
 
-- По умолчанию действует ограничение: не более 10 запросов в секунду с одного IP.
-- При превышении лимита возвращается 429 Too Many Requests.
+- By default, the limit is: no more than 10 requests per second from one IP.
+- If the limit is exceeded, 429 Too Many Requests is returned.
 
-## Безопасность
+## Security
 
-- CORS разрешён только для http://localhost:3000 и https://ваш-домен.ру
-- Rate limiting включён для всех endpoint'ов
+- CORS is allowed only for http://localhost:3000 and https://your-domain.com
+- Rate limiting is enabled for all endpoints
 
-## Тесты и переменные окружения
+## Tests and Environment Variables
 
-Для запуска интеграционных тестов требуется переменная окружения `DATABASE_URL`:
+To run integration tests, the `DATABASE_URL` environment variable is required:
 
 ```bash
 export DATABASE_URL="host=localhost dbname=restapi_test sslmode=disable"
@@ -305,4 +305,4 @@ go test -v ./...
 
 ## Swagger/OpenAPI
 
-Документация OpenAPI находится в файле `docs/swagger.yaml`. Её можно просматривать через Swagger UI (см. выше).
+OpenAPI documentation is in `docs/swagger.yaml`. It can be viewed via Swagger UI (see above).

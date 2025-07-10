@@ -174,7 +174,7 @@ func TestAuth_EdgeCases(t *testing.T) {
 	user.Password = "password123"
 	repo.Create(user)
 
-	// 1. Вход с неверным email
+	// 1. Login with incorrect email
 	b := &bytes.Buffer{}
 	json.NewEncoder(b).Encode(map[string]interface{}{"email": "wrong@example.org", "password": "password123"})
 	rec := httptest.NewRecorder()
@@ -182,7 +182,7 @@ func TestAuth_EdgeCases(t *testing.T) {
 	s.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
-	// 2. Вход с неверным паролем
+	// 2. Login with incorrect password
 	b.Reset()
 	json.NewEncoder(b).Encode(map[string]interface{}{"email": user.Email, "password": "wrongpass"})
 	rec = httptest.NewRecorder()
@@ -190,7 +190,7 @@ func TestAuth_EdgeCases(t *testing.T) {
 	s.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
-	// 3. Вход для удалённого пользователя
+	// 3. Login for deleted user
 	user.IsDeleted = true
 	repo.Users[user.ID] = user
 	b.Reset()
@@ -199,15 +199,15 @@ func TestAuth_EdgeCases(t *testing.T) {
 	req, _ = http.NewRequest(http.MethodPost, "/sessions", b)
 	s.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusForbidden, rec.Code)
-	user.IsDeleted = false // вернём обратно
+	user.IsDeleted = false // revert
 
-	// 4. Доступ к приватному эндпоинту без сессии
+	// 4. Access private endpoint without session
 	rec = httptest.NewRecorder()
 	req, _ = http.NewRequest(http.MethodGet, "/private/whoami", nil)
 	s.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
-	// 5. Доступ к приватному эндпоинту с валидной сессией
+	// 5. Access private endpoint with valid session
 	secretKey := []byte("secret")
 	srv := newServer(store, sessions.NewCookieStore(secretKey))
 	sc := securecookie.New(secretKey, nil)
@@ -219,7 +219,7 @@ func TestAuth_EdgeCases(t *testing.T) {
 	srv.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	// 6. Доступ к приватному эндпоинту после удаления пользователя
+	// 6. Access private endpoint after deleting user
 	user.IsDeleted = true
 	repo.Users[user.ID] = user
 	rec = httptest.NewRecorder()

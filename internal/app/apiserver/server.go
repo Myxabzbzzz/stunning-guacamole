@@ -245,7 +245,7 @@ func (s *server) handleTransactionsCreate() http.HandlerFunc {
 		AmountOfMoney int64 `json:"amount_of_money"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Авторизация (пример: только авторизованный пользователь может создавать)
+		// Authorization (example: only authorized user can create)
 		sess, err := s.sessionStore.Get(r, sessionName)
 		if err != nil || sess.Values["user_id"] == nil {
 			s.error(w, r, http.StatusUnauthorized, errors.New("not authenticated"))
@@ -253,25 +253,25 @@ func (s *server) handleTransactionsCreate() http.HandlerFunc {
 		}
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			s.error(w, r, http.StatusBadRequest, errors.New("неверный формат запроса"))
+			s.error(w, r, http.StatusBadRequest, errors.New("invalid request format"))
 			return
 		}
 		if req.AmountOfMoney <= 0 {
-			s.error(w, r, http.StatusBadRequest, errors.New("amount_of_money должен быть положительным"))
+			s.error(w, r, http.StatusBadRequest, errors.New("amount_of_money must be positive"))
 			return
 		}
 		if req.FromUserID == req.ToUserID {
-			s.error(w, r, http.StatusBadRequest, errors.New("отправитель и получатель не могут совпадать"))
+			s.error(w, r, http.StatusBadRequest, errors.New("sender and recipient cannot be the same"))
 			return
 		}
 		fromUser, err := s.store.User().Find(req.FromUserID)
 		if err != nil || fromUser.IsDeleted {
-			s.error(w, r, http.StatusBadRequest, errors.New("отправитель не найден или удалён"))
+			s.error(w, r, http.StatusBadRequest, errors.New("sender not found or deleted"))
 			return
 		}
 		toUser, err := s.store.User().Find(req.ToUserID)
 		if err != nil || toUser.IsDeleted {
-			s.error(w, r, http.StatusBadRequest, errors.New("получатель не найден или удалён"))
+			s.error(w, r, http.StatusBadRequest, errors.New("recipient not found or deleted"))
 			return
 		}
 		var txID int
@@ -299,7 +299,7 @@ func (s *server) handleTransactionsCreate() http.HandlerFunc {
 
 func (s *server) handleTransactionsConfirm() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Авторизация
+		// Authorization
 		sess, err := s.sessionStore.Get(r, sessionName)
 		if err != nil || sess.Values["user_id"] == nil {
 			s.error(w, r, http.StatusUnauthorized, errors.New("not authenticated"))
@@ -366,7 +366,7 @@ func (s *server) handleTransactionsConfirm() http.HandlerFunc {
 		}
 
 		if senderBalance < amount {
-			s.error(w, r, http.StatusUnprocessableEntity, errors.New("zakon oma, netu deneg sidi doma"))
+			s.error(w, r, http.StatusUnprocessableEntity, errors.New("insufficient funds"))
 			return
 		}
 
@@ -408,7 +408,7 @@ func (s *server) handleTransactionsList() http.HandlerFunc {
 
 func (s *server) handleTransactionCancel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Авторизация
+		// Authorization
 		sess, err := s.sessionStore.Get(r, sessionName)
 		if err != nil || sess.Values["user_id"] == nil {
 			s.error(w, r, http.StatusUnauthorized, errors.New("not authenticated"))
@@ -548,7 +548,7 @@ func (s *server) handleListUsers() http.HandlerFunc {
 
 func (s *server) handleSoftDeleteUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Авторизация
+		// Authorization
 		sess, err := s.sessionStore.Get(r, sessionName)
 		if err != nil || sess.Values["user_id"] == nil {
 			s.error(w, r, http.StatusUnauthorized, errors.New("not authenticated"))
@@ -636,7 +636,7 @@ func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 	}
 }
 
-// rateLimitMiddleware ограничивает количество запросов с одного IP
+// rateLimitMiddleware limits the number of requests from a single IP
 func (s *server) rateLimitMiddleware(maxReq int, window time.Duration) func(http.Handler) http.Handler {
 	type client struct {
 		mu    sync.Mutex

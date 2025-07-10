@@ -2,12 +2,12 @@ openapi: 3.0.3
 info:
   title: Billing API
   description: |
-    Надежный RESTful API для управления пользовательскими аккаунтами, транзакциями и биллинговыми операциями.
-    Обеспечивает аутентификацию, управление транзакциями, отслеживание баланса и историю операций.
+    Reliable RESTful API for managing user accounts, transactions, and billing operations.
+    Provides authentication, transaction management, balance tracking, and transaction history.
   version: 1.0.0
 servers:
   - url: http://localhost:8080
-    description: Локальный сервер разработки
+    description: Local development server
 
 components:
   securitySchemes:
@@ -24,7 +24,7 @@ components:
           example: 1
         name:
           type: string
-          example: Иван Иванов
+          example: Ivan Ivanov
         phone_number:
           type: string
           example: "+998908620059"
@@ -81,7 +81,7 @@ components:
           example: "2024-07-02T12:00:00Z"
         status:
           type: string
-          description: "Статус транзакции: pending (ожидает), created (создана), confirmed (подтверждена), canceled (отменена)"
+          description: "Transaction status: pending, created, confirmed, canceled"
           enum: [pending, created, confirmed, canceled]
           example: created
         is_deleted:
@@ -106,7 +106,7 @@ components:
       properties:
         error:
           type: string
-          example: Описание ошибки
+          example: Error description
     StatusResponse:
       type: object
       properties:
@@ -124,23 +124,23 @@ components:
       properties:
         status:
           type: string
-          description: "Статус транзакции: confirmed, canceled, created"
+          description: "Transaction status: confirmed, canceled, created"
           example: confirmed
 
 security:
   - SessionAuth: []
 
 tags:
-  - name: Аутентификация
-  - name: Пользователи
-  - name: Транзакции
-  - name: Система
+  - name: Authentication
+  - name: Users
+  - name: Transactions
+  - name: System
 
 paths:
   /sessions:
     post:
-      tags: [Аутентификация]
-      summary: Вход пользователя
+      tags: [Authentication]
+      summary: User login
       requestBody:
         required: true
         content:
@@ -157,48 +157,48 @@ paths:
                   example: securepassword
       responses:
         '200':
-          description: Успешный вход
+          description: Successful login
         '400':
-          description: Неверные данные
+          description: Invalid data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Неверный email или пароль
+          description: Invalid email or password
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '403':
-          description: Пользователь заблокирован или удалён
+          description: User is blocked or deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /private/whoami:
     get:
-      tags: [Аутентификация]
-      summary: Получение информации о текущем пользователе
+      tags: [Authentication]
+      summary: Get current user info
       security:
         - SessionAuth: []
       responses:
         '200':
-          description: Данные пользователя
+          description: User data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
         '401':
-          description: Неавторизован
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /users:
     post:
-      tags: [Пользователи]
-      summary: Создание нового пользователя
+      tags: [Users]
+      summary: Create new user
       requestBody:
         required: true
         content:
@@ -207,43 +207,43 @@ paths:
               $ref: '#/components/schemas/UserCreateRequest'
       responses:
         '201':
-          description: Пользователь создан
+          description: User created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
         '400':
-          description: Ошибка валидации
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: Email уже используется
+          description: Email already in use
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '422':
-          description: Некорректные параметры
+          description: Invalid parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     get:
-      tags: [Пользователи]
-      summary: Список всех пользователей
+      tags: [Users]
+      summary: List all users
       responses:
         '200':
-          description: Список пользователей
+          description: List of users
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserList'
   /users/{id}:
     get:
-      tags: [Пользователи]
-      summary: Получение пользователя по ID
+      tags: [Users]
+      summary: Get user by ID
       parameters:
         - name: id
           in: path
@@ -252,27 +252,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Данные пользователя
+          description: User data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Пользователь не найден
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /users/{id}/balance:
     get:
-      tags: [Пользователи]
-      summary: Получение баланса пользователя
+      tags: [Users]
+      summary: Get user balance
       parameters:
         - name: id
           in: path
@@ -281,27 +281,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Баланс пользователя
+          description: User balance
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceResponse'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Пользователь не найден
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /users/{id}/transactions:
     get:
-      tags: [Пользователи]
-      summary: Получение истории транзакций пользователя
+      tags: [Users]
+      summary: Get user transaction history
       parameters:
         - name: id
           in: path
@@ -310,27 +310,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список транзакций
+          description: List of transactions
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionList'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Пользователь не найден
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /users/{id}/delete:
     post:
-      tags: [Пользователи]
-      summary: Мягкое удаление пользователя
+      tags: [Users]
+      summary: Soft delete user
       parameters:
         - name: id
           in: path
@@ -339,27 +339,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Пользователь помечен как удалён
+          description: User marked as deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Пользователь не найден
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /users/{id}/restore:
     post:
-      tags: [Пользователи]
-      summary: Восстановление пользователя (undo soft-delete)
+      tags: [Users]
+      summary: Restore user (undo soft-delete)
       parameters:
         - name: id
           in: path
@@ -368,27 +368,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Пользователь восстановлен
+          description: User restored
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Пользователь не найден
+          description: User not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /transactions:
     post:
-      tags: [Транзакции]
-      summary: Создание новой транзакции
+      tags: [Transactions]
+      summary: Create new transaction
       requestBody:
         required: true
         content:
@@ -397,37 +397,37 @@ paths:
               $ref: '#/components/schemas/TransactionCreateRequest'
       responses:
         '201':
-          description: Транзакция создана
+          description: Transaction created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
         '400':
-          description: Ошибка валидации или некорректные параметры
+          description: Validation error or invalid parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '422':
-          description: Некорректные параметры
+          description: Invalid parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     get:
-      tags: [Транзакции]
-      summary: Список всех транзакций
+      tags: [Transactions]
+      summary: List all transactions
       responses:
         '200':
-          description: Список транзакций
+          description: List of transactions
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionList'
   /transactions/{id}:
     get:
-      tags: [Транзакции]
-      summary: Получение транзакции по ID
+      tags: [Transactions]
+      summary: Get transaction by ID
       parameters:
         - name: id
           in: path
@@ -436,27 +436,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Данные транзакции
+          description: Transaction data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Transaction'
         '400':
-          description: Некорректный ID
+          description: Invalid ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Транзакция не найдена
+          description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /transactions/{id}/confirm:
     post:
-      tags: [Транзакции]
-      summary: Подтверждение транзакции
+      tags: [Transactions]
+      summary: Confirm transaction
       parameters:
         - name: id
           in: path
@@ -465,39 +465,39 @@ paths:
             type: integer
       responses:
         '200':
-          description: Транзакция подтверждена
+          description: Transaction confirmed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionStatusResponse'
         '400':
-          description: Некорректный ID или транзакция уже обработана
+          description: Invalid ID or transaction already processed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '403':
-          description: Недостаточно средств или пользователь удалён
+          description: Insufficient funds or user deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Транзакция не найдена
+          description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '422':
-          description: Недостаточно средств
+          description: Insufficient funds
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /transactions/{id}/cancel:
     post:
-      tags: [Транзакции]
-      summary: Отмена транзакции
+      tags: [Transactions]
+      summary: Cancel transaction
       parameters:
         - name: id
           in: path
@@ -506,30 +506,30 @@ paths:
             type: integer
       responses:
         '200':
-          description: Транзакция отменена
+          description: Transaction canceled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionStatusResponse'
         '400':
-          description: Некорректный ID или транзакция не может быть отменена
+          description: Invalid ID or transaction cannot be canceled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Транзакция не найдена
+          description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /status:
     get:
-      tags: [Система]
-      summary: Проверка состояния API
+      tags: [System]
+      summary: API status check
       responses:
         '200':
-          description: API работает
+          description: API is running
           content:
             application/json:
               schema:

@@ -38,10 +38,10 @@ func (r *TransactionRepository) Confirm(transactionID int, userID int) error {
 		return nil
 	}
 	if tx.FromUserID != userID {
-		return errors.New("только отправитель может подтверждать транзакцию")
+		return errors.New("only the sender can confirm the transaction")
 	}
 	if tx.Status == "confirmed" || tx.Status == "canceled" {
-		return errors.New("транзакция уже подтверждена или отменена")
+		return errors.New("transaction already confirmed or canceled")
 	}
 	tx.Status = "confirmed"
 	fromUser := r.store.userRepository.Users[tx.FromUserID]
@@ -51,7 +51,7 @@ func (r *TransactionRepository) Confirm(transactionID int, userID int) error {
 		toUser.AmountOfMoney += tx.AmountOfMoney
 		return nil
 	}
-	return errors.New("недостаточно средств у отправителя или получатель не найден")
+	return errors.New("insufficient funds with the sender or recipient not found")
 }
 
 func (r *TransactionRepository) Cancel(transactionID int, userID int) error {
@@ -60,7 +60,7 @@ func (r *TransactionRepository) Cancel(transactionID int, userID int) error {
 		return nil // already canceled or not found
 	}
 	if tx.FromUserID != userID {
-		return errors.New("только отправитель может отменять транзакцию")
+		return errors.New("only the sender can cancel the transaction")
 	}
 	if tx.Status == "canceled" || tx.Status == "confirmed" {
 		return nil
@@ -73,7 +73,7 @@ func (r *TransactionRepository) Cancel(transactionID int, userID int) error {
 		toUser.AmountOfMoney -= tx.AmountOfMoney
 		return nil
 	}
-	return errors.New("у получателя недостаточно средств для возврата или пользователь не найден")
+	return errors.New("insufficient funds with the recipient for return or user not found")
 }
 
 func (s *Store) Transaction() store.TransactionRepository {

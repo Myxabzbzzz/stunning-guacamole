@@ -62,7 +62,7 @@ func (u *User) ComparePassword(password string) bool {
 // CheckNotDeleted
 func (u *User) CheckNotDeleted() error {
 	if u.IsDeleted {
-		return fmt.Errorf("Пользователь удалён или заблокирован")
+		return fmt.Errorf("User is deleted or blocked")
 	}
 	return nil
 }

@@ -2,11 +2,11 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Billing API",
-    "description": "Надежный RESTful API для управления пользовательскими аккаунтами, транзакциями и биллинговыми операциями. Обеспечивает аутентификацию, управление транзакциями, отслеживание баланса и историю операций.",
+    "description": "Reliable RESTful API for managing user accounts, transactions, and billing operations. Provides authentication, transaction management, balance tracking, and transaction history.",
     "version": "1.0.0"
   },
   "servers": [
-    { "url": "http://localhost:8080", "description": "Локальный сервер разработки" }
+    { "url": "http://localhost:8080", "description": "Local development server" }
   ],
   "components": {
     "securitySchemes": {
@@ -21,7 +21,7 @@
         "type": "object",
         "properties": {
           "id": { "type": "integer", "example": 1 },
-          "name": { "type": "string", "example": "Иван Иванов" },
+          "name": { "type": "string", "example": "Ivan Ivanov" },
           "phone_number": { "type": "string", "example": "+998908620059" },
           "card_number": { "type": "string", "example": "1234567890123456" },
           "amount_of_money": { "type": "integer", "example": 1000 },
@@ -53,7 +53,7 @@
           "to_user_id": { "type": "integer", "example": 2 },
           "amount_of_money": { "type": "integer", "example": 100 },
           "transaction_time": { "type": "string", "format": "date-time", "example": "2024-07-02T12:00:00Z" },
-          "status": { "type": "string", "description": "Статус транзакции: pending (ожидает), created (создана), confirmed (подтверждена), canceled (отменена)", "enum": ["pending", "created", "confirmed", "canceled"], "example": "created" },
+          "status": { "type": "string", "description": "Transaction status: pending, created, confirmed, canceled", "enum": ["pending", "created", "confirmed", "canceled"], "example": "created" },
           "is_deleted": { "type": "boolean", "example": false }
         }
       },
@@ -73,7 +73,7 @@
       "Error": {
         "type": "object",
         "properties": {
-          "error": { "type": "string", "example": "Описание ошибки" }
+          "error": { "type": "string", "example": "Error description" }
         }
       },
       "StatusResponse": {
@@ -91,17 +91,216 @@
       "TransactionStatusResponse": {
         "type": "object",
         "properties": {
-          "status": { "type": "string", "description": "Статус транзакции: confirmed, canceled, created", "example": "confirmed" }
+          "status": { "type": "string", "description": "Transaction status: confirmed, canceled, created", "example": "confirmed" }
         }
       }
     }
   },
   "security": [ { "SessionAuth": [] } ],
   "tags": [
-    { "name": "Аутентификация" },
-    { "name": "Пользователи" },
-    { "name": "Транзакции" },
-    { "name": "Система" }
+    { "name": "Authentication" },
+    { "name": "Users" },
+    { "name": "Transactions" },
+    { "name": "System" }
   ],
-  "paths": {}
+  "paths": {
+    "/sessions": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "ivan@example.com" },
+                  "password": { "type": "string", "example": "securepassword" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful login" },
+          "400": { "description": "Invalid data", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid email or password", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "User is blocked or deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/private/whoami": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get current user info",
+        "security": [ { "SessionAuth": [] } ],
+        "responses": {
+          "200": { "description": "User data", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users",
+        "responses": {
+          "200": { "description": "List of users", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserList" } } } }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user by ID",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "User data", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users/{id}/balance": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user balance",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "User balance", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BalanceResponse" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users/{id}/transactions": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user transaction history",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "List of transactions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionList" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users/{id}/delete": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Soft delete user",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "User marked as deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusResponse" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users/{id}/restore": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Restore user (undo soft-delete)",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "User restored", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusResponse" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/transactions": {
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Create new transaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TransactionCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Transaction created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } },
+          "400": { "description": "Validation error or invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Invalid parameters", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "List all transactions",
+        "responses": {
+          "200": { "description": "List of transactions", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionList" } } } }
+        }
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get transaction by ID",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Transaction data", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } },
+          "400": { "description": "Invalid ID", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Transaction not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/transactions/{id}/confirm": {
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Confirm transaction",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Transaction confirmed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionStatusResponse" } } } },
+          "400": { "description": "Invalid ID or transaction already processed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Insufficient funds or user deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Transaction not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Insufficient funds", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/transactions/{id}/cancel": {
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Cancel transaction",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "Transaction canceled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionStatusResponse" } } } },
+          "400": { "description": "Invalid ID or transaction cannot be canceled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Transaction not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "tags": ["System"],
+        "summary": "API status check",
+        "responses": {
+          "200": { "description": "API is running", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusResponse" } } } }
+        }
+      }
+    }
+  }
 }

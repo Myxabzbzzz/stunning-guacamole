@@ -1,4 +1,4 @@
-# Параметры
+# Parameters
 DB_NAME=restapi_dev
 DB_USER=postgres
 DB_PASS=your_password

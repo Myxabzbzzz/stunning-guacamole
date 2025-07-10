@@ -38,7 +38,7 @@ func StartWithSwagger(config *Config) error {
 
 	srv.router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
-	// Добавляем обработчик для /swagger.yaml
+	// Add handler for /swagger.yaml
 	srv.router.PathPrefix("/swagger.yaml").Handler(http.StripPrefix("/swagger.yaml", http.FileServer(http.Dir("docs"))))
 
 	return http.ListenAndServe(config.BindAddr, srv)

@@ -39,7 +39,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 
 func TestTransaction_EdgeCases(t *testing.T) {
 	s := teststore.New()
-	// Создаём двух пользователей
+	// Create two users
 	sender := &model.User{Name: "Sender", Email: "sender@example.org", Password: "pass", AmountOfMoney: 1000}
 	recipient := &model.User{Name: "Recipient", Email: "recipient@example.org", Password: "pass", AmountOfMoney: 1000}
 	s.User().Create(sender)
@@ -47,43 +47,43 @@ func TestTransaction_EdgeCases(t *testing.T) {
 
 	txRepo := s.Transaction().(*teststore.TransactionRepository)
 
-	// 1. Обычная транзакция и отмена
+	// 1. Normal transaction and cancellation
 	tx := &model.Transaction{FromUserID: sender.ID, ToUserID: recipient.ID, AmountOfMoney: 100}
 	txRepo.Create(tx)
 	assert.Equal(t, "created", tx.Status)
 	txRepo.Cancel(tx.ID)
 	assert.Equal(t, "canceled", tx.Status)
 
-	// 2. Повторная отмена (должно остаться canceled)
+	// 2. Repeated cancellation (should remain canceled)
 	txRepo.Cancel(tx.ID)
 	assert.Equal(t, "canceled", tx.Status)
 
-	// 3. Подтверждённая транзакция не может быть отменена
+	// 3. Confirmed transaction cannot be cancelled
 	tx2 := &model.Transaction{FromUserID: sender.ID, ToUserID: recipient.ID, AmountOfMoney: 50, Status: "confirmed"}
 	txRepo.Create(tx2)
 	txRepo.Cancel(tx2.ID)
 	assert.Equal(t, "confirmed", tx2.Status)
 
-	// 4. Недостаточно средств у получателя для возврата
+	// 4. Recipient does not have enough money to return
 	tx3 := &model.Transaction{FromUserID: sender.ID, ToUserID: recipient.ID, AmountOfMoney: 9999}
 	txRepo.Create(tx3)
-	recipient.AmountOfMoney = 0 // насильно обнуляем баланс
+	recipient.AmountOfMoney = 0 // forcibly set balance to zero
 	txRepo.Cancel(tx3.ID)
-	// Баланс не должен стать отрицательным
+	// Balance should not become negative
 	assert.True(t, recipient.AmountOfMoney >= 0)
 
-	// 5. Транзакция с несуществующим пользователем
+	// 5. Transaction with non-existent user
 	tx4 := &model.Transaction{FromUserID: 999, ToUserID: recipient.ID, AmountOfMoney: 10}
 	err := txRepo.Create(tx4)
-	assert.NoError(t, err) // в teststore нет проверки, но в реальном store должна быть ошибка
+	assert.NoError(t, err) // In teststore, there is no check, but in a real store, it should be an error
 
 	// 6. amount_of_money <= 0
 	tx5 := &model.Transaction{FromUserID: sender.ID, ToUserID: recipient.ID, AmountOfMoney: 0}
 	err = txRepo.Create(tx5)
-	assert.NoError(t, err) // в teststore нет проверки, но в реальном store должна быть ошибка
+	assert.NoError(t, err) // In teststore, there is no check, but in a real store, it should be an error
 
-	// 7. Отправитель = получатель
+	// 7. Sender = Recipient
 	tx6 := &model.Transaction{FromUserID: sender.ID, ToUserID: sender.ID, AmountOfMoney: 10}
 	err = txRepo.Create(tx6)
-	assert.NoError(t, err) // в teststore нет проверки, но в реальном store должна быть ошибка
+	assert.NoError(t, err) // In teststore, there is no check, but in a real store, it should be an error
 }

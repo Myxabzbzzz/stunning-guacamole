@@ -21,7 +21,7 @@ func (r *UserRepository) Create(u *model.User) error {
 	if err := u.BeforeCreate(); err != nil {
 		return err
 	}
-	// Проверка уникальности email
+	// Check for uniqueness of email
 	for _, user := range r.Users {
 		if user.Email == u.Email {
 			return errors.New("email already exists")
